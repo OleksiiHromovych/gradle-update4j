@@ -8,6 +8,6 @@ data class UnresolvedDependency(
   val version: String,
   val extension: String,
   val localFile: File? = null,
-  val isOSClassifier: Boolean = false,
+  val isTargetClassifier: Boolean = false,
   val classifier: String? = null
 )

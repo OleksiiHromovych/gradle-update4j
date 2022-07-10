@@ -1,5 +1,6 @@
 package com.andretietz.gradle.update4j
 
+import org.update4j.Arch
 import org.update4j.OS
 import java.io.File
 import java.net.URL
@@ -12,6 +13,7 @@ data class ExternalResolvedDependency(
   override val file: File,
   val url: URL,
   val os: OS?,
+  val arch: Arch?,
   val needsCleanup: Boolean
 ) : ResolvedDependency(file)
 

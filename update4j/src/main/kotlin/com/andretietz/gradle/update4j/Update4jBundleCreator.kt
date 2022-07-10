@@ -8,6 +8,7 @@ import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
+import org.update4j.Arch
 import org.update4j.Configuration
 import org.update4j.FileMetadata
 import org.update4j.OS
@@ -130,6 +131,7 @@ open class Update4jBundleCreator : DefaultTask() {
             .uri(resolvedDependency.url.toURI())
             .classpath(resolvedDependency.file.name.endsWith(".jar"))
             .os(resolvedDependency.os)
+            .arch(resolvedDependency.arch)
             .ignoreBootConflict()
         }
       }
@@ -191,44 +193,87 @@ open class Update4jBundleCreator : DefaultTask() {
     } else {
       dependency.localFile
     }
+
+    var os: OS? = null
+    var arch: Arch? = null
+
+    if (dependency.classifier?.contains("-") == true) {
+      val (osStr, archStr) = dependency.classifier.split("-")
+
+      if (OS.values().map { it.shortName }.contains(osStr)) {
+        os = OS.fromShortName(osStr)
+      }
+
+      if (OS.values().map { it.fullName }.contains(osStr)) {
+        os = osFromFullName(osStr)
+      }
+
+      if (Arch.values().map { it.id }.contains(archStr)) {
+        arch = Arch.fromId(archStr)
+      }
+    } else {
+      if (OS.values().map { it.shortName }.contains(dependency.classifier)) {
+        os = OS.fromShortName(dependency.classifier)
+      }
+    }
+
     return ExternalResolvedDependency(
       file = file,
       url = remoteUrl,
-      os = if (OS.values().map { it.shortName }.contains(dependency.classifier)) {
-        OS.fromShortName(dependency.classifier)
-      } else null,
-      needsCleanup
+      os = os,
+      arch = arch,
+      needsCleanup = needsCleanup
     )
   }
 
   private fun createPossibleDependencies(dependency: ResolvedArtifact): Collection<UnresolvedDependency> {
-    return if (OS.values()
-        .map { it.shortName }
-        .any { it == dependency.classifier } && useMaven
-    ) {
-      OS.values().filter { it != OS.OTHER }.map {
-        UnresolvedDependency(
-          dependency.moduleVersion.id.group,
-          dependency.moduleVersion.id.name,
-          dependency.moduleVersion.id.version,
-          dependency.extension ?: dependency.type,
-          null,
-          true,
-          it.shortName
+    val osClassified = OS.values()
+      .map { it.shortName }
+      .any { it == dependency.classifier }
+
+    val target = availableTargets.find { dependency.name.endsWith(it) }
+
+    return when {
+      osClassified -> {
+        OS.values().filter { it != OS.OTHER }.map {
+          UnresolvedDependency(
+            dependency.moduleVersion.id.group,
+            dependency.moduleVersion.id.name,
+            dependency.moduleVersion.id.version,
+            dependency.extension ?: dependency.type,
+            null,
+            false,
+            it.shortName
+          )
+        }
+      }
+      target != null -> {
+        val baseName = dependency.moduleVersion.id.name.replace(target, "")
+        availableTargets.map {
+          UnresolvedDependency(
+            dependency.moduleVersion.id.group,
+            baseName + it,
+            dependency.moduleVersion.id.version,
+            dependency.extension ?: dependency.type,
+            null,
+            true,
+            it
+          )
+        }
+      }
+      else -> {
+        setOf(
+          UnresolvedDependency(
+            dependency.moduleVersion.id.group,
+            dependency.moduleVersion.id.name,
+            dependency.moduleVersion.id.version,
+            dependency.extension ?: dependency.type,
+            dependency.file,
+            false,
+            dependency.classifier
+          )
         )
       }
-    } else {
-      setOf(
-        UnresolvedDependency(
-          dependency.moduleVersion.id.group,
-          dependency.moduleVersion.id.name,
-          dependency.moduleVersion.id.version,
-          dependency.extension ?: dependency.type,
-          dependency.file,
-          false,
-          dependency.classifier
-        )
-      )
     }
   }
 
@@ -237,22 +282,36 @@ open class Update4jBundleCreator : DefaultTask() {
     dependency: UnresolvedDependency
   ): URL? {
     return repos.map { repo ->
-      URL(
-        String.format(
-          "%s%s/%s/%s/%s-%s%s.%s", repo.toString(),
-          dependency.group.replace('.', '/'),
-          dependency.name, dependency.version, dependency.name, dependency.version,
-          if (dependency.classifier != null) "-${dependency.classifier}" else "",
-          dependency.extension
+      if(dependency.isTargetClassifier) {
+        URL(
+          String.format(
+            "%s%s/%s/%s/%s-%s%s.%s", repo.toString(),
+            dependency.group.replace('.', '/'),
+            dependency.name, dependency.version, dependency.name, dependency.version, "", dependency.extension
+          )
         )
-      )
+      } else {
+        URL(
+          String.format(
+            "%s%s/%s/%s/%s-%s%s.%s", repo.toString(),
+            dependency.group.replace('.', '/'),
+            dependency.name, dependency.version, dependency.name, dependency.version,
+            if (dependency.classifier != null) "-${dependency.classifier}" else "",
+            dependency.extension
+          )
+        )
+      }
     }.firstOrNull { url ->
       try {
         url.openStream().close()
         true
       } catch (error: Throwable) {
         false
+      }.also {
+        println(url.path + " $it")
       }
+    }.also {
+      if (it == null) println("WARNING top")
     }
   }
 
@@ -267,5 +326,30 @@ open class Update4jBundleCreator : DefaultTask() {
 
   companion object {
     private const val OUTPUT_DIRECTORY_DEFAULT = "update4j"
+
+    private val availableTargets = listOf(
+      "windows-x64",
+      "macos-x64",
+      "macos-arm64",
+      "linux-x64",
+      "linux-arm64",
+    )
+  }
+
+  private val OS.fullName: String
+    get() = when (this) {
+      OS.WINDOWS -> "windows"
+      OS.MAC -> "macos"
+      OS.LINUX -> "linux"
+      OS.OTHER -> "other"
+    }
+
+  fun osFromFullName(name: String): OS {
+    return when (name) {
+      "macos" -> OS.MAC
+      "windows" -> OS.WINDOWS
+      "linux" -> OS.LINUX
+      else -> OS.OTHER
+    }
   }
 }
