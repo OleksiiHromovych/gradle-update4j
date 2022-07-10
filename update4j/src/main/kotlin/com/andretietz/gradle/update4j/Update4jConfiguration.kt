@@ -1,6 +1,7 @@
 package com.andretietz.gradle.update4j
 
 import org.update4j.OS
+import java.io.File
 
 open class Update4jConfiguration @JvmOverloads constructor(
   var resourcesFolderName: String = ".",
@@ -13,6 +14,7 @@ open class Update4jConfiguration @JvmOverloads constructor(
   var remoteLocation: String? = null,
   var artifactsConfiguration: String? = null,
   var update4jProperties: List<Triple<String, String, OS>> = emptyList(),
+  var extraFiles: List<File> = emptyList(),
   var basePath: String? = null,
   var bundleLocation: String = OUTPUT_DIRECTORY_DEFAULT
 ) {

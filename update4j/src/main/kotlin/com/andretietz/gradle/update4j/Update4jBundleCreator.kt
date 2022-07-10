@@ -5,11 +5,13 @@ import org.gradle.api.artifacts.Dependency.DEFAULT_CONFIGURATION
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
-import org.gradle.api.internal.artifacts.DefaultResolvedArtifact
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
-import org.update4j.*
+import org.update4j.Configuration
+import org.update4j.FileMetadata
+import org.update4j.OS
+import org.update4j.Property
 import java.io.File
 import java.net.URI
 import java.net.URL
@@ -42,6 +44,9 @@ open class Update4jBundleCreator : DefaultTask() {
   lateinit var update4jProperties: List<Triple<String, String, OS>>
 
   @Input
+  lateinit var extraFiles: List<File>
+
+  @Input
   lateinit var resources: List<String>
 
   @Input
@@ -68,7 +73,7 @@ open class Update4jBundleCreator : DefaultTask() {
     val repos = project.repositories
       .filterIsInstance<MavenArtifactRepository>()
       // make sure to exclude maven local, since it cannot be reached
-      .filter { it.name != "MavelLocal" && it.url.scheme != "file" }
+      .filter { it.name != "MavenLocal" && it.url.scheme != "file" }
       .map {
         if (!it.url.path.endsWith('/')) {
           URL(it.url.toString().plus('/'))
@@ -78,8 +83,11 @@ open class Update4jBundleCreator : DefaultTask() {
       .toSet()
 
     // copy all artifacts from this project into the output dir
-    project.configurations.getByName(getDepsConfiguration()).allArtifacts
-      .map { it.file }.forEach { artifact ->
+    project.configurations.getByName(getDepsConfiguration())
+      .allArtifacts
+      .map { it.file }
+      .let { it + extraFiles }
+      .forEach { artifact ->
         val targetFile = File("${outputDirectory.absolutePath}/${artifact.name}")
         artifact.copyTo(targetFile, true)
         builder.file(
@@ -91,9 +99,9 @@ open class Update4jBundleCreator : DefaultTask() {
 
     //project.configurations.getByName(DEFAULT_CONFIGURATION).resolvedConfiguration.resolvedArtifacts
     val resolvedDependencies = project.configurations.getByName(getDepsConfiguration())
-      .resolvedConfiguration.resolvedArtifacts
+      .resolvedConfiguration
+      .resolvedArtifacts
       .toSet()
-      .filterIsInstance<DefaultResolvedArtifact>()
       .flatMap(this::createPossibleDependencies)
       .map { dependency ->
         // get download url if available
@@ -193,17 +201,17 @@ open class Update4jBundleCreator : DefaultTask() {
     )
   }
 
-  private fun createPossibleDependencies(dependency: DefaultResolvedArtifact): Collection<UnresolvedDependency> {
+  private fun createPossibleDependencies(dependency: ResolvedArtifact): Collection<UnresolvedDependency> {
     return if (OS.values()
         .map { it.shortName }
-        .any { it == dependency.artifactName.classifier } && useMaven
+        .any { it == dependency.classifier } && useMaven
     ) {
       OS.values().filter { it != OS.OTHER }.map {
         UnresolvedDependency(
           dependency.moduleVersion.id.group,
           dependency.moduleVersion.id.name,
           dependency.moduleVersion.id.version,
-          dependency.artifactName.extension ?: dependency.artifactName.type,
+          dependency.extension ?: dependency.type,
           null,
           true,
           it.shortName
@@ -215,10 +223,10 @@ open class Update4jBundleCreator : DefaultTask() {
           dependency.moduleVersion.id.group,
           dependency.moduleVersion.id.name,
           dependency.moduleVersion.id.version,
-          dependency.artifactName.extension ?: dependency.artifactName.type,
+          dependency.extension ?: dependency.type,
           dependency.file,
           false,
-          dependency.artifactName.classifier
+          dependency.classifier
         )
       )
     }
