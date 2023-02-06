@@ -5,6 +5,7 @@ import org.gradle.api.artifacts.Dependency.DEFAULT_CONFIGURATION
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
@@ -45,7 +46,7 @@ open class Update4jBundleCreator : DefaultTask() {
   lateinit var update4jProperties: List<Triple<String, String, OS>>
 
   @Input
-  lateinit var extraFiles: List<File>
+  var extraFilesProvider: Provider<List<File>>? = null
 
   @Input
   lateinit var resources: List<String>
@@ -87,7 +88,7 @@ open class Update4jBundleCreator : DefaultTask() {
     project.configurations.getByName(getDepsConfiguration())
       .allArtifacts
       .map { it.file }
-      .let { it + extraFiles }
+      .let { it + extraFilesProvider?.get().orEmpty() }
       .forEach { artifact ->
         val targetFile = File("${outputDirectory.absolutePath}/${artifact.name}")
         artifact.copyTo(targetFile, true)

@@ -27,7 +27,7 @@ class Update4jPlugin : Plugin<Project> {
       task.resourcesDirectoryName = configuration.resourcesFolderName
       task.update4jProperties = configuration.update4jProperties
       task.basePath = configuration.basePath!!
-      task.extraFiles = configuration.extraFiles
+      task.extraFilesProvider = configuration.extraFilesProvider
     }
   }
 
