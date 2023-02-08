@@ -14,7 +14,7 @@ compileTestKotlin.kotlinOptions.jvmTarget = "1.8"
 dependencies {
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
   implementation gradleApi()
-  implementation 'org.update4j:update4j:1.5.11'
+  implementation 'io.github.vadimpikha:update4j:1.5.12'
   testImplementation 'io.kotlintest:kotlintest-runner-junit5:3.4.2'
 }
 
