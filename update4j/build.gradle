@@ -1,3 +1,5 @@
+import com.vanniktech.maven.publish.SonatypeHost
+
 plugins {
   id 'kotlin'
   id 'java-gradle-plugin'
@@ -31,6 +33,9 @@ gradlePlugin {
 mavenPublishing {
   //"update4j-gradle-plugin"
   coordinates(GROUP, "update4j", VERSION_NAME)
-  publishToMavenCentral("S01", true)
+  publishToMavenCentral(SonatypeHost.S01, true)
   signAllPublications()
 }
+
+//./gradlew publishAllPublicationsToMavenCentral
+//NOTE:plugin will be available after some time after publication (30 minutes probably)
