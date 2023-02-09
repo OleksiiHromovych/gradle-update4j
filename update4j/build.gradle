@@ -2,6 +2,7 @@ plugins {
   id 'kotlin'
   id 'java-gradle-plugin'
   id 'maven-publish'
+  id "com.vanniktech.maven.publish"
 }
 
 version = VERSION_NAME
@@ -21,8 +22,15 @@ dependencies {
 gradlePlugin {
   plugins {
     update4jPlugin {
-      id = "com.andretietz.gradle.update4j"
+      id = "io.github.vadimpikha.gradle.update4j"
       implementationClass = "com.andretietz.gradle.update4j.Update4jPlugin"
     }
   }
+}
+
+mavenPublishing {
+  //"update4j-gradle-plugin"
+  coordinates(GROUP, "update4j", VERSION_NAME)
+  publishToMavenCentral("S01", true)
+  signAllPublications()
 }

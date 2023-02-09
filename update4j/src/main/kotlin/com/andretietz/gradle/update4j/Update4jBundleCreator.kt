@@ -308,11 +308,7 @@ open class Update4jBundleCreator : DefaultTask() {
         true
       } catch (error: Throwable) {
         false
-      }.also {
-        println(url.path + " $it")
       }
-    }.also {
-      if (it == null) println("WARNING top")
     }
   }
 
@@ -345,7 +341,7 @@ open class Update4jBundleCreator : DefaultTask() {
       OS.OTHER -> "other"
     }
 
-  fun osFromFullName(name: String): OS {
+  private fun osFromFullName(name: String): OS {
     return when (name) {
       "macos" -> OS.MAC
       "windows" -> OS.WINDOWS
