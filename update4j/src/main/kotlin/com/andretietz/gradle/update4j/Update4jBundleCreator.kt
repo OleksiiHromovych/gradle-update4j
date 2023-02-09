@@ -43,7 +43,7 @@ open class Update4jBundleCreator : DefaultTask() {
   lateinit var resourcesDirectoryName: String
 
   @Input
-  lateinit var update4jProperties: List<Triple<String, String, OS>>
+  var update4jPropertiesProvider: Provider<List<Update4jProperty>>? = null
 
   @Input
   var extraFilesProvider: Provider<List<File>>? = null
@@ -70,7 +70,11 @@ open class Update4jBundleCreator : DefaultTask() {
       .baseUri(remoteLocation)
       .basePath(basePath)
       .launcher(launcherClass)
-      .properties(update4jProperties.map { Property(it.first, it.second, it.third) })
+      .properties(
+        update4jPropertiesProvider?.get()
+          ?.map { (key, value, os) -> Property(key, value, OS.fromShortName(os)) }
+          .orEmpty()
+      )
 
     val repos = project.repositories
       .filterIsInstance<MavenArtifactRepository>()
@@ -248,6 +252,7 @@ open class Update4jBundleCreator : DefaultTask() {
           )
         }
       }
+
       target != null -> {
         val baseName = dependency.moduleVersion.id.name.replace(target, "")
         availableTargets.map {
@@ -262,6 +267,7 @@ open class Update4jBundleCreator : DefaultTask() {
           )
         }
       }
+
       else -> {
         setOf(
           UnresolvedDependency(
@@ -283,7 +289,7 @@ open class Update4jBundleCreator : DefaultTask() {
     dependency: UnresolvedDependency
   ): URL? {
     return repos.map { repo ->
-      if(dependency.isTargetClassifier) {
+      if (dependency.isTargetClassifier) {
         URL(
           String.format(
             "%s%s/%s/%s/%s-%s%s.%s", repo.toString(),

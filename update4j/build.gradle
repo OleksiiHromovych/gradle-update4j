@@ -31,7 +31,6 @@ gradlePlugin {
 }
 
 mavenPublishing {
-  //"update4j-gradle-plugin"
   coordinates(GROUP, "update4j", VERSION_NAME)
   publishToMavenCentral(SonatypeHost.S01, true)
   signAllPublications()
