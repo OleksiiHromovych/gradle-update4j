@@ -28,6 +28,7 @@ class Update4jPlugin : Plugin<Project> {
       task.update4jPropertiesProvider = configuration.update4jPropertiesProvider
       task.basePath = configuration.basePath!!
       task.extraFilesProvider = configuration.extraFilesProvider
+      task.localLibs = configuration.localLibs
     }
   }
 

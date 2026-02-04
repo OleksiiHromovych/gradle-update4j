@@ -49,6 +49,10 @@ open class Update4jBundleCreator : DefaultTask() {
   var extraFilesProvider: Provider<List<File>>? = null
 
   @Input
+  var localLibs: Provider<Set<String>>? = null
+
+
+  @Input
   lateinit var resources: List<String>
 
   @Input
@@ -75,6 +79,8 @@ open class Update4jBundleCreator : DefaultTask() {
           ?.map { (key, value, os) -> Property(key, value, OS.fromShortName(os)) }
           .orEmpty()
       )
+
+    val onlyLocalLibs = localLibs?.get().orEmpty()
 
     val repos = project.repositories
       .filterIsInstance<MavenArtifactRepository>()
@@ -111,7 +117,7 @@ open class Update4jBundleCreator : DefaultTask() {
       .flatMap(this::createPossibleDependencies)
       .map { dependency ->
         // get download url if available
-        val remoteUrl = if (useMaven) getDownloadUrl(repos, dependency) else null
+        val remoteUrl = if (useMaven && dependency.name !in onlyLocalLibs) getDownloadUrl(repos, dependency) else null
         if (remoteUrl != null) {
           return@map createExternalDependency(dependency, remoteUrl)
         } else {

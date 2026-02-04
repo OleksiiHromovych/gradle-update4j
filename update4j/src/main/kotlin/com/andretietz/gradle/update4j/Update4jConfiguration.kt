@@ -28,6 +28,7 @@ open class Update4jConfiguration @JvmOverloads constructor(
   var artifactsConfiguration: String? = null,
   var update4jPropertiesProvider: Provider<List<Update4jProperty>>? = null,
   var extraFilesProvider: Provider<List<File>>? = null,
+  var localLibs: Provider<Set<String>>? = null,
   var basePath: String? = null,
   var bundleLocation: String = OUTPUT_DIRECTORY_DEFAULT
 ) {

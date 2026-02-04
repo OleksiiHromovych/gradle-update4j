@@ -3,8 +3,8 @@ import com.vanniktech.maven.publish.SonatypeHost
 plugins {
   id 'kotlin'
   id 'java-gradle-plugin'
-  id 'maven-publish'
-  id "com.vanniktech.maven.publish"
+//  id 'maven-publish'
+//  id "com.vanniktech.maven.publish"
 }
 
 version = VERSION_NAME
@@ -24,17 +24,17 @@ dependencies {
 gradlePlugin {
   plugins {
     update4jPlugin {
-      id = "io.github.vadimpikha.gradle.update4j"
+      id = "io.github.OleksiiHromovych.gradle.update4j"
       implementationClass = "com.andretietz.gradle.update4j.Update4jPlugin"
     }
   }
 }
 
-mavenPublishing {
-  coordinates(GROUP, "update4j", VERSION_NAME)
-  publishToMavenCentral(SonatypeHost.S01, true)
-  signAllPublications()
-}
+//mavenPublishing {
+//  coordinates(GROUP, "update4j", VERSION_NAME)
+//  publishToMavenCentral(SonatypeHost.S01, true)
+//  signAllPublications()
+//}
 
 //./gradlew publishAllPublicationsToMavenCentral
 //NOTE:plugin will be available after some time after publication (30 minutes probably)
