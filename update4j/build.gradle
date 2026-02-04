@@ -3,7 +3,7 @@ import com.vanniktech.maven.publish.SonatypeHost
 plugins {
   id 'kotlin'
   id 'java-gradle-plugin'
-//  id 'maven-publish'
+  id 'maven-publish'
 //  id "com.vanniktech.maven.publish"
 }
 
