@@ -4,7 +4,7 @@ plugins {
   id 'kotlin'
   id 'java-gradle-plugin'
   id 'maven-publish'
-//  id "com.vanniktech.maven.publish"
+  id "com.vanniktech.maven.publish"
 }
 
 version = VERSION_NAME
@@ -30,11 +30,15 @@ gradlePlugin {
   }
 }
 
-//mavenPublishing {
-//  coordinates(GROUP, "update4j", VERSION_NAME)
-//  publishToMavenCentral(SonatypeHost.S01, true)
-//  signAllPublications()
-//}
+mavenPublishing {
+  coordinates(GROUP, "update4j", VERSION_NAME)
+  publishToMavenCentral(SonatypeHost.S01, true)
+  signAllPublications()
+}
+
+tasks.withType(Sign).configureEach {
+    enabled = false
+}
 
 //./gradlew publishAllPublicationsToMavenCentral
 //NOTE:plugin will be available after some time after publication (30 minutes probably)
