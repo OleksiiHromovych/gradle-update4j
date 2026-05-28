@@ -152,7 +152,7 @@ open class Update4jBundleCreator : DefaultTask() {
             .ignoreBootConflict()
         }
       }
-    }
+    }.forEach { builder.file(it) }
 
     // add resources
     resources.map { File(project.projectDir, it) }
