@@ -9,14 +9,15 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
-import org.update4j.Arch
-import org.update4j.Configuration
-import org.update4j.FileMetadata
-import org.update4j.OS
-import org.update4j.Property
+import org.update4j.*
+import org.update4j.mapper.FileMapper
+import org.update4j.util.PropertyManager
 import java.io.File
+import java.io.IOException
 import java.net.URI
 import java.net.URL
+import java.security.PrivateKey
+import java.util.*
 
 
 open class Update4jBundleCreator : DefaultTask() {
@@ -139,6 +140,11 @@ open class Update4jBundleCreator : DefaultTask() {
         is ExternalResolvedDependency -> {
           FileMetadata
             .readFrom(resolvedDependency.file.absolutePath)
+            .path(
+              with(resolvedDependency.file) {
+                "${nameWithoutExtension}_s${length()}.$extension"
+              }
+            )
             .uri(resolvedDependency.url.toURI())
             .classpath(resolvedDependency.file.name.endsWith(".jar"))
             .os(resolvedDependency.os)
@@ -146,7 +152,7 @@ open class Update4jBundleCreator : DefaultTask() {
             .ignoreBootConflict()
         }
       }
-    }.forEach { builder.file(it) }
+    }
 
     // add resources
     resources.map { File(project.projectDir, it) }
